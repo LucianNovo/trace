@@ -3,48 +3,6 @@
 namespace Schema;
 
 
-function version_13($pdo)
-{
-    $pdo->exec('ALTER TABLE feeds ADD COLUMN enabled INTEGER DEFAULT 1');
-}
-
-
-function version_12($pdo)
-{
-    $pdo->exec('ALTER TABLE config ADD COLUMN api_token TEXT DEFAULT "'.\Model\generate_api_token().'"');
-}
-
-
-function version_11($pdo)
-{
-    $rq = $pdo->prepare('
-        SELECT
-        items.id, items.url AS item_url, feeds.site_url
-        FROM items
-        LEFT JOIN feeds ON feeds.id=items.feed_id
-    ');
-
-    $rq->execute();
-
-    $items = $rq->fetchAll(\PDO::FETCH_ASSOC);
-
-    foreach ($items as $item) {
-
-        if ($item['id'] !== $item['item_url']) {
-
-            $id = hash('crc32b', $item['id'].$item['site_url']);
-        }
-        else {
-
-            $id = hash('crc32b', $item['item_url'].$item['site_url']);
-        }
-
-        $rq = $pdo->prepare('UPDATE items SET id=? WHERE id=?');
-        $rq->execute(array($id, $item['id']));
-    }
-}
-
-
 function version_10($pdo)
 {
     $pdo->exec('ALTER TABLE config ADD COLUMN theme TEXT DEFAULT "original"');

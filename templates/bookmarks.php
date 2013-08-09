@@ -10,32 +10,33 @@
 
     <section class="items" id="listing">
     <?php foreach ($items as $item): ?>
-        <article id="item-<?= $item['id'] ?>" data-item-id="<?= $item['id'] ?>">
+        <?php $item_id = Model\encode_item_id($item['id']) ?>
+        <article id="item-<?= $item_id ?>" data-item-id="<?= $item_id ?>">
             <h2>
                 <a
-                    href="?action=show&amp;menu=bookmarks&amp;id=<?= $item['id'] ?>"
-                    data-item-id="<?= $item['id'] ?>"
-                    id="open-<?= $item['id'] ?>"
+                    href="?action=show&amp;id=<?= $item_id ?>"
+                    data-item-id="<?= $item_id ?>"
+                    id="open-<?= $item_id ?>"
                 >
                     <?= Helper\escape($item['title']) ?>
                 </a>
             </h2>
             <p>
-                <a href="?action=feed-items&amp;feed_id=<?= $item['feed_id'] ?>"><?= Helper\escape($item['feed_title']) ?></a> |
+                <?= Helper\escape($item['feed_title']) ?> |
                 <?= dt('%e %B %Y %k:%M', $item['updated']) ?> |
 
                 <span class="hide-mobile">
-                    <a href="?action=bookmark&amp;value=0&amp;id=<?= $item['id'] ?>&amp;menu=bookmarks&amp;offset=<?= $offset ?>">
+                    <a href="?action=bookmark&amp;value=0&amp;id=<?= $item_id ?>&amp;redirect=bookmarks&amp;offset=<?= $offset ?>">
                         <?= t('remove bookmark') ?>
                     </a> |
                 </span>
 
                 <a
                     href="<?= $item['url'] ?>"
-                    id="original-<?= $item['id'] ?>"
+                    id="original-<?= $item_id ?>"
                     rel="noreferrer"
                     target="_blank"
-                    data-item-id="<?= $item['id'] ?>"
+                    data-item-id="<?= $item_id ?>"
                 >
                     <?= t('original link') ?>
                 </a>

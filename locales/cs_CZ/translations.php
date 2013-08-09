@@ -1,7 +1,7 @@
 <?php
 
 return array(
-    'Help' => 'Nápověda',
+    'Help' => 'Pomoc',
     'No item' => 'Žádný článěk',
     'items' => 'články',
     'There is %d empty feeds, there is maybe an error: %s...' =>
@@ -54,7 +54,7 @@ return array(
     'About' => 'O aplikaci',
     'Miniflux version:' => 'Verze Miniflux:',
     'Nothing to read' => 'Nic ke čtení',
-    '<span id="page-counter">%s</span>unread items' => '<span id="page-counter">%s</span>nepřečtené články',
+    'unread items' => 'nepřečtené články',
     'mark all as read' => 'označit vše jako přečtené',
     'original link' => 'původní odkaz',
     'mark as read' => 'označit jako přečtené',
@@ -108,20 +108,5 @@ return array(
     'Nothing to read, do you want to <a href="?action=refresh-all" data-action="refresh-all">update your subscriptions?</a>' =>
     'Nic ke čtení, chete <a href="?action=refresh-all" data-action="refresh-all">aktualizovat vaše odběry?</a>',
     'Show help' => 'Zobrazit nápovědu',
-    'Close help' => 'Zavřít nápovědu',
-    'checked at' => 'zkontrolováno',
-    'disable' => 'zakázat',
-    'enable' => 'povolit',
-    'This subscription has been enabled successfully.' => 'Odběr byl úspěšně povolen.',
-    'This subscription has been disabled successfully.' => 'Odběr byl úspěšně zakázán.',
-    'Do you really want to disable this subscription: "%s"?' => 'Opravdu chcete zakázet odběr "%s"?',
-    'download content' => 'stáhnout obsah',
-    'Download content' => 'Stáhnout obsah',
-    'in progress...' => 'probíhá&hellip;',
-    'content downloaded' => 'obsah stažen',
-    'Listing' => 'Seznam',
-    'Theme' => 'Vzhled',
-    'API endpoint:' => 'Koncový bod:',
-    'API username:' => 'Uživatelské jméno:',
-    'API token:' => 'Heslo:'
+    'Close help' => 'Zobrazit nápovědu'
 );

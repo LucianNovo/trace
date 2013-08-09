@@ -5,7 +5,7 @@
 <?php else: ?>
 
     <div class="page-header">
-        <h2><?= t('<span id="page-counter">%s</span>unread items', isset($nb_items) ? $nb_items.' ' : '') ?></h2>
+        <h2><span id="page-counter"><?= isset($nb_items) ? $nb_items.' ' : '' ?></span><?= t('unread items') ?></h2>
         <ul>
             <li>
             <a href="?action=mark-as-read" data-action="mark-all-read">
@@ -17,13 +17,14 @@
 
     <section class="items" id="listing">
     <?php foreach ($items as $item): ?>
-        <article id="item-<?= $item['id'] ?>" data-item-id="<?= $item['id'] ?>" data-item-page="<?= $menu ?>" data-hide="true">
+        <?php $item_id = Model\encode_item_id($item['id']) ?>
+        <article id="item-<?= $item_id ?>" data-item-id="<?= $item_id ?>" data-item-page="<?= $menu ?>" data-hide="true">
             <h2>
                 <?= $item['bookmark'] ? '★ ' : '' ?>
                 <a
-                    href="?action=show&amp;menu=unread&amp;id=<?= $item['id'] ?>"
-                    data-item-id="<?= $item['id'] ?>"
-                    id="open-<?= $item['id'] ?>"
+                    href="?action=read&amp;id=<?= $item_id ?>"
+                    data-item-id="<?= $item_id ?>"
+                    id="open-<?= $item_id ?>"
                 >
                     <?= Helper\escape($item['title']) ?>
                 </a>
@@ -32,30 +33,30 @@
                 <?= Helper\escape(Helper\summary(strip_tags($item['content']), 50, 300)) ?>
             </p>
             <p>
-                <a href="?action=feed-items&amp;feed_id=<?= $item['feed_id'] ?>"><?= Helper\escape($item['feed_title']) ?></a> |
+                <?= Helper\escape($item['feed_title']) ?> |
                 <span class="hide-mobile"><?= dt('%e %B %Y %k:%M', $item['updated']) ?> |</span>
 
                 <span class="hide-mobile">
                 <?php if ($item['bookmark']): ?>
-                    <a id="bookmark-<?= $item['id'] ?>" href="?action=bookmark&amp;value=0&amp;id=<?= $item['id'] ?>&amp;menu=unread&amp;offset=<?= $offset ?>"><?= t('remove bookmark') ?></a> |
+                    <a id="bookmark-<?= $item_id ?>" href="?action=bookmark&amp;value=0&amp;id=<?= $item_id ?>&amp;redirect=unread&amp;offset=<?= $offset ?>"><?= t('remove bookmark') ?></a> |
                 <?php else: ?>
-                    <a id="bookmark-<?= $item['id'] ?>" href="?action=bookmark&amp;value=1&amp;id=<?= $item['id'] ?>&amp;menu=unread&amp;offset=<?= $offset ?>"><?= t('bookmark') ?></a> |
+                    <a id="bookmark-<?= $item_id ?>" href="?action=bookmark&amp;value=1&amp;id=<?= $item_id ?>&amp;redirect=unread&amp;offset=<?= $offset ?>"><?= t('bookmark') ?></a> |
                 <?php endif ?>
                 </span>
 
                 <a
-                    href="?action=mark-item-read&amp;id=<?= $item['id'] ?>&amp;offset=<?= $offset ?>"
+                    href="?action=mark-item-read&amp;id=<?= $item_id ?>&amp;offset=<?= $offset ?>"
                     data-action="mark-read"
-                    data-item-id="<?= $item['id'] ?>"
+                    data-item-id="<?= $item_id ?>"
                 >
                     <?= t('mark as read') ?>
                 </a> |
                 <a
                     href="<?= $item['url'] ?>"
-                    id="original-<?= $item['id'] ?>"
+                    id="original-<?= $item_id ?>"
                     rel="noreferrer"
                     target="_blank"
-                    data-item-id="<?= $item['id'] ?>"
+                    data-item-id="<?= $item_id ?>"
                     data-action="original-link"
                     data-hide="true"
                 >

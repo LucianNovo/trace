@@ -99,30 +99,18 @@ function binary($data, $status_code = 200)
 function csp(array $policies = array())
 {
     $policies['default-src'] = "'self'";
-    $values = '';
 
-    foreach ($policies as $policy => $hosts) {
+    foreach (array('X-WebKit-CSP', 'X-Content-Security-Policy', 'Content-Security-Policy') as $header) {
 
-        if (is_array($hosts)) {
+        $values = '';
 
-            $acl = '';
+        foreach ($policies as $policy => $hosts) {
 
-            foreach ($hosts as &$host) {
-
-                if ($host === '*' || $host === 'self' || strpos($host, 'http') === 0) {
-                    $acl .= $host.' ';
-                }
-            }
-        }
-        else {
-
-            $acl = $hosts;
+            $values .= $policy.' '.$hosts.'; ';
         }
 
-        $values .= $policy.' '.trim($acl).'; ';
+        header($header.': '.$values);
     }
-
-    header('Content-Security-Policy: '.$values);
 }
 
 

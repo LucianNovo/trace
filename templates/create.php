@@ -1,8 +1,8 @@
 <div class="page-header">
-    <h2><?= t('Preferences') ?></h2>
+    <h2><?= t('Initialize a Trace') ?></h2>
 </div>
 <section>
-<form method="post" action="?action=config" autocomplete="off">
+<form method="post" action="?action=create" autocomplete="off">
 
     <?= Helper\form_label(t('Username'), 'username') ?>
     <?= Helper\form_text('username', $values, $errors, array('required')) ?><br/>

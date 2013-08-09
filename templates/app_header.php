@@ -18,15 +18,15 @@
             <nav>
                 <a class="logo" href="?">mini<span>flux</span></a>
                 <ul>
-                    <li <?= isset($menu) && $menu === 'unread' ? 'class="active"' : '' ?>>
+                  <!--   <li <?= isset($menu) && $menu === 'unread' ? 'class="active"' : '' ?>>
                         <a href="?action=unread"><?= t('unread') ?> <span id="nav-counter"><?= isset($nb_unread_items) ? '('.$nb_unread_items.')' : '' ?></span></a>
-                    </li>
-                    <li <?= isset($menu) && $menu === 'bookmarks' ? 'class="active"' : '' ?>>
+                    </li> -->
+                  <!--   <li <?= isset($menu) && $menu === 'bookmarks' ? 'class="active"' : '' ?>>
                         <a href="?action=bookmarks"><?= t('bookmarks') ?></a>
-                    </li>
-                    <li <?= isset($menu) && $menu === 'history' ? 'class="active"' : '' ?>>
+                    </li> -->
+                  <!--   <li <?= isset($menu) && $menu === 'history' ? 'class="active"' : '' ?>>
                         <a href="?action=history"><?= t('history') ?></a>
-                    </li>
+                    </li> -->
                     <li <?= isset($menu) && $menu === 'feeds' ? 'class="active"' : '' ?>>
                         <a href="?action=feeds"><?= t('subscriptions') ?></a>
                     </li>

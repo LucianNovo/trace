@@ -25,6 +25,7 @@ body {
 
 a {
     color: #3366CC;
+    border: 1px solid rgba(255, 255, 255, 0);
 }
 
 a:focus {
@@ -50,11 +51,6 @@ h2 {
 
 h3 {
     font-size: 1.2em;
-}
-
-h5, h6 {
-    margin: 0;
-    padding: 0;
 }
 
 blockquote {
@@ -111,26 +107,22 @@ th {
     text-align: left;
 }
 
-pre, code {
-    background: #f0f0f0;
-    border: 1px solid #ccc;
-    font-family: monospace;
-    color: brown;
-    line-height: 1.0em;
-    border-radius: 5px;
-}
-
 pre {
-    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background: #f0f0f0;
+    padding: 0.8em;
     overflow: auto;
+    color: brown;
 }
 
-pre > code {
-    border: none;
+code {
+    color: brown;
 }
 
-p > code {
-    padding: 3px;
+caption code,
+p code {
+    font-size: 1.1em;
 }
 
 /* forms */
@@ -379,16 +371,6 @@ nav .active a {
     padding-right: 0;
 }
 
-.feed-disabled,
-.feed-disabled a {
-    color: #aaa;
-}
-
-.feed-last-checked {
-    color: brown;
-    font-size: 0.7em;
-    font-weight: normal;
-}
 
 /* items listing */
 .items article {
@@ -446,14 +428,13 @@ nav .active a {
     padding-right: 5px;
     padding-bottom: 50px;
     color: #555;
+}
+
+.item p,
+.item li {
     font-family: Georgia, serif;
     line-height: 1.6em;
     font-size: 1.1em;
-}
-
-.item li pre,
-.item p code {
-
 }
 
 .item h2,
@@ -476,12 +457,10 @@ nav .active a {
     margin-left: 25px;
 }
 
-#item-content > a img,
-#item-content > img,
-.item p img {
-    margin-top: 10px;
-    margin-bottom: 10px;
+.item img {
     display: block;
+    margin-top: 15px;
+    margin-bottom: 15px;
     max-width: 100%;
 }
 
@@ -528,32 +507,17 @@ nav .active a {
 
 .infos {
     padding-bottom: 20px;
-    color: #ccc;
+    color: #ddd;
 }
 
 .item .infos a {
-    color: #ccc;
-}
-
-span.downloading img {
-    display: inline;
-    margin: 0;
-    padding: 0;
-}
-
-.downloading {
-    color: #000;
+    color: #ddd;
 }
 
 #items-paging {
     margin-top: 50px;
     font-size: 75%;
     text-align: center;
-}
-
-.item .infos a.bookmark-icon {
-    color: #333;
-    text-decoration: none;
 }
 
 /* other pages */
@@ -632,8 +596,7 @@ section li {
         font-size: 0.85em;
     }
 
-    video,
     iframe {
-        max-width: 98%;
+        max-width: 95%;
     }
 }

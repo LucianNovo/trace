@@ -4,6 +4,7 @@ body {
     background-color: #f5fec9;
     color: #4c4c4c;
     font-family: 'Verdana', Arial, sans-serif;
+    font-size: 15px;
     max-width: 800px;
     padding-bottom: 20px;
 }
@@ -105,6 +106,7 @@ section.page {
     padding-right: 5px;
 }
 
+
 .page-header h2, .page-section h2 {
     border-bottom: 1px dotted  #CACACA;
     font-family: Georgia, serif;
@@ -145,11 +147,6 @@ form {
     margin-top: 20px;
 }
 
-section > .form-actions {
-    margin-left: 10px;
-    margin-bottom: 10px;
-}
-
 input[type="email"],
 input[type="tel"],
 input[type="password"],
@@ -180,18 +177,11 @@ textarea:focus {
     margin-bottom: 10px;
 }
 
-.btn-red,
 .btn-blue {
     background-color: #708F51;
     border-color: #065806;
 }
 
-a.btn-red:hover,
-a.btn-red:focus,
-.btn-red:hover,
-.btn-red:focus,
-a.btn-blue:hover,
-a.btn-blue:focus,
 .btn-blue:hover,
 .btn-blue:focus {
     background-color: #609C22;

@@ -1,0 +1,12 @@
+[09-Aug-2013 06:44:52 UTC] PHP Parse error:  syntax error, unexpected ')' in /home/lucianno/public_html/miniflux/index.php on line 25
+[09-Aug-2013 06:51:53 UTC] PHP Parse error:  syntax error, unexpected T_DOUBLE_ARROW in /home/lucianno/public_html/miniflux/index.php on line 24
+[09-Aug-2013 06:51:55 UTC] PHP Parse error:  syntax error, unexpected T_DOUBLE_ARROW in /home/lucianno/public_html/miniflux/index.php on line 24
+[09-Aug-2013 06:51:59 UTC] PHP Fatal error:  Call to undefined function get_config_value() in /home/lucianno/public_html/miniflux/index.php on line 24
+[09-Aug-2013 06:52:00 UTC] PHP Fatal error:  Call to undefined function get_config_value() in /home/lucianno/public_html/miniflux/index.php on line 24
+[09-Aug-2013 06:52:00 UTC] PHP Fatal error:  Call to undefined function get_config_value() in /home/lucianno/public_html/miniflux/index.php on line 24
+[09-Aug-2013 07:18:27 UTC] PHP Parse error:  syntax error, unexpected '[', expecting '(' in /home/lucianno/public_html/miniflux/index.php on line 539
+[09-Aug-2013 07:18:28 UTC] PHP Parse error:  syntax error, unexpected '[', expecting '(' in /home/lucianno/public_html/miniflux/index.php on line 539
+[09-Aug-2013 07:19:43 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /home/lucianno/public_html/miniflux/index.php:538) in /home/lucianno/public_html/miniflux/vendor/PicoFarad/Response.php on line 27
+[09-Aug-2013 07:41:34 UTC] PHP Parse error:  syntax error, unexpected T_ELSE, expecting '(' in /home/lucianno/public_html/miniflux/model.php on line 729
+[09-Aug-2013 07:41:35 UTC] PHP Parse error:  syntax error, unexpected T_ELSE, expecting '(' in /home/lucianno/public_html/miniflux/model.php on line 729
+[09-Aug-2013 07:41:58 UTC] PHP Parse error:  syntax error, unexpected T_ELSE, expecting '(' in /home/lucianno/public_html/miniflux/model.php on line 729

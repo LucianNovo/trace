@@ -2,9 +2,6 @@
 
 namespace Model;
 
-require_once 'vendor/PicoFeed/Encoding.php';
-require_once 'vendor/PicoFeed/Filter.php';
-require_once 'vendor/PicoFeed/Client.php';
 require_once 'vendor/PicoFeed/Export.php';
 require_once 'vendor/PicoFeed/Import.php';
 require_once 'vendor/PicoFeed/Reader.php';
@@ -25,7 +22,7 @@ use PicoFeed\Reader;
 use PicoFeed\Export;
 
 
-const DB_VERSION     = 13;
+const DB_VERSION     = 10;
 const HTTP_USERAGENT = 'Miniflux - http://miniflux.net';
 const LIMIT_ALL      = -1;
 
@@ -102,9 +99,15 @@ function write_debug()
 }
 
 
-function generate_api_token()
+function encode_item_id($input)
 {
-    return substr(base64_encode(file_get_contents('/dev/urandom', false, null, 0, 20)), 0, 15);
+    return strtr(base64_encode($input), '+/=', '-_,');
+}
+
+
+function decode_item_id($input)
+{
+    return base64_decode(strtr($input, '-_,', '+/='));
 }
 
 
@@ -176,10 +179,10 @@ function import_feed($url)
 
                 $feed_id = $db->getConnection()->getLastId();
                 update_items($feed_id, $feed->items);
-
-                return (int) $feed_id;
             }
         }
+
+        return true;
     }
 
     return false;
@@ -202,7 +205,6 @@ function update_feeds($limit = LIMIT_ALL)
 function update_feed($feed_id)
 {
     $feed = get_feed($feed_id);
-    if (empty($feed)) return false;
 
     $reader = new Reader;
 
@@ -241,7 +243,6 @@ function update_feed($feed_id)
 function get_feeds_id($limit = LIMIT_ALL)
 {
     $table_feeds = \PicoTools\singleton('db')->table('feeds')
-                                             ->eq('enabled', 1)
                                              ->asc('last_checked');
 
     if ($limit !== LIMIT_ALL) {
@@ -314,75 +315,11 @@ function update_feed_cache_infos($feed_id, $last_modified, $etag)
 }
 
 
-function download_item($item_id)
-{
-    require_once 'vendor/Readability/Readability.php';
-
-    $item = get_item($item_id);
-
-    $client = \PicoFeed\Client::create();
-    $client->url = $item['url'];
-    $client->timeout = HTTP_TIMEOUT;
-    $client->user_agent = HTTP_USERAGENT;
-    $client->execute();
-
-    $content = $client->getContent();
-
-    if (! empty($content)) {
-
-        $content = \PicoFeed\Encoding::toUTF8($content);
-
-        $readability = new \Readability($content, $item['url']);
-
-        if ($readability->init()) {
-
-            // Get relevant content
-            $content = $readability->getContent()->innerHTML;
-
-            // Filter content
-            $filter = new \PicoFeed\Filter($content, $item['url']);
-            $content = $filter->execute();
-
-            $nocontent = (bool) get_config_value('nocontent');
-            if ($nocontent === false) {
-
-                // Save content
-                \PicoTools\singleton('db')
-                    ->table('items')
-                    ->eq('id', $item['id'])
-                    ->save(array('content' => $content));
-            }
-
-            return array(
-                'result' => true,
-                'content' => $content
-            );
-        }
-    }
-
-    return array(
-        'result' => false,
-        'content' => ''
-    );
-}
-
-
 function remove_feed($feed_id)
 {
     // Items are removed by a sql constraint
-    return \PicoTools\singleton('db')->table('feeds')->eq('id', $feed_id)->remove();
-}
-
-
-function enable_feed($feed_id)
-{
-    return \PicoTools\singleton('db')->table('feeds')->eq('id', $feed_id)->save((array('enabled' => 1)));
-}
-
-
-function disable_feed($feed_id)
-{
-    return \PicoTools\singleton('db')->table('feeds')->eq('id', $feed_id)->save((array('enabled' => 0)));
+    $db = \PicoTools\singleton('db');
+    return $db->table('feeds')->eq('id', $feed_id)->remove();
 }
 
 
@@ -390,7 +327,7 @@ function get_unread_items($offset = null, $limit = null)
 {
     return \PicoTools\singleton('db')
         ->table('items')
-        ->columns('items.id', 'items.title', 'items.updated', 'items.url', 'items.content', 'items.bookmark', 'items.status', 'items.feed_id', 'feeds.site_url', 'feeds.title AS feed_title')
+        ->columns('items.id', 'items.title', 'items.updated', 'items.url', 'items.content', 'items.bookmark', 'items.status', 'feeds.site_url', 'feeds.title AS feed_title')
         ->join('feeds', 'id', 'feed_id')
         ->eq('status', 'unread')
         ->desc('updated')
@@ -413,7 +350,7 @@ function get_read_items($offset = null, $limit = null)
 {
     return \PicoTools\singleton('db')
         ->table('items')
-        ->columns('items.id', 'items.title', 'items.updated', 'items.url', 'items.bookmark', 'items.feed_id', 'feeds.site_url', 'feeds.title AS feed_title')
+        ->columns('items.id', 'items.title', 'items.updated', 'items.url', 'items.bookmark', 'feeds.site_url', 'feeds.title AS feed_title')
         ->join('feeds', 'id', 'feed_id')
         ->eq('status', 'read')
         ->desc('updated')
@@ -437,7 +374,7 @@ function get_bookmarks($offset = null, $limit = null)
 {
     return \PicoTools\singleton('db')
         ->table('items')
-        ->columns('items.id', 'items.title', 'items.updated', 'items.url', 'items.status', 'items.feed_id', 'feeds.site_url', 'feeds.title AS feed_title')
+        ->columns('items.id', 'items.title', 'items.updated', 'items.url', 'items.status', 'feeds.site_url', 'feeds.title AS feed_title')
         ->join('feeds', 'id', 'feed_id')
         ->in('status', array('read', 'unread'))
         ->eq('bookmark', 1)
@@ -462,7 +399,7 @@ function get_feed_items($feed_id, $offset = null, $limit = null)
 {
     return \PicoTools\singleton('db')
         ->table('items')
-        ->columns('items.id', 'items.title', 'items.updated', 'items.url', 'items.feed_id', 'items.status', 'items.bookmark', 'feeds.site_url')
+        ->columns('items.id', 'items.title', 'items.updated', 'items.url', 'items.status', 'items.bookmark', 'feeds.site_url')
         ->join('feeds', 'id', 'feed_id')
         ->in('status', array('read', 'unread'))
         ->eq('feed_id', $feed_id)
@@ -482,55 +419,24 @@ function get_item($id)
 }
 
 
-function get_nav_item($item, $status = array('unread'), $bookmark = array(1, 0), $feed_id = null)
+function get_nav_item($item)
 {
-    $query = \PicoTools\singleton('db')
+    $unread_items = \PicoTools\singleton('db')
         ->table('items')
-        ->columns('id', 'status', 'title', 'bookmark')
-        ->neq('status', 'removed')
-        ->desc('updated');
-
-    if ($feed_id) $query->eq('feed_id', $feed_id);
-
-    $items = $query->findAll();
+        ->columns('items.id')
+        ->eq('status', 'unread')
+        ->desc('updated')
+        ->findAll();
 
     $next_item = null;
     $previous_item = null;
 
-    for ($i = 0, $ilen = count($items); $i < $ilen; $i++) {
+    for ($i = 0, $ilen = count($unread_items); $i < $ilen; $i++) {
 
-        if ($items[$i]['id'] == $item['id']) {
+        if ($unread_items[$i]['id'] == $item['id']) {
 
-            if ($i > 0) {
-
-                $j = $i - 1;
-
-                while ($j >= 0) {
-
-                    if (in_array($items[$j]['status'], $status) && in_array($items[$j]['bookmark'], $bookmark)) {
-                        $previous_item = $items[$j];
-                        break;
-                    }
-
-                    $j--;
-                }
-            }
-
-            if ($i < ($ilen - 1)) {
-
-                $j = $i + 1;
-
-                while ($j < $ilen) {
-
-                    if (in_array($items[$j]['status'], $status) && in_array($items[$j]['bookmark'], $bookmark)) {
-                        $next_item = $items[$j];
-                        break;
-                    }
-
-                    $j++;
-                }
-            }
-
+            if ($i > 0) $previous_item = $unread_items[$i - 1];
+            if ($i < ($ilen - 1)) $next_item = $unread_items[$i + 1];
             break;
         }
     }
@@ -544,7 +450,7 @@ function get_nav_item($item, $status = array('unread'), $bookmark = array(1, 0),
 
 function set_item_removed($id)
 {
-    return \PicoTools\singleton('db')
+    \PicoTools\singleton('db')
         ->table('items')
         ->eq('id', $id)
         ->save(array('status' => 'removed', 'content' => ''));
@@ -553,7 +459,7 @@ function set_item_removed($id)
 
 function set_item_read($id)
 {
-    return \PicoTools\singleton('db')
+    \PicoTools\singleton('db')
         ->table('items')
         ->eq('id', $id)
         ->save(array('status' => 'read'));
@@ -562,7 +468,7 @@ function set_item_read($id)
 
 function set_item_unread($id)
 {
-    return \PicoTools\singleton('db')
+    \PicoTools\singleton('db')
         ->table('items')
         ->eq('id', $id)
         ->save(array('status' => 'unread'));
@@ -571,7 +477,7 @@ function set_item_unread($id)
 
 function set_bookmark_value($id, $value)
 {
-    return \PicoTools\singleton('db')
+    \PicoTools\singleton('db')
         ->table('items')
         ->eq('id', $id)
         ->save(array('bookmark' => $value));
@@ -612,7 +518,7 @@ function switch_item_status($id)
 // Mark all items as read
 function mark_as_read()
 {
-    return \PicoTools\singleton('db')
+    \PicoTools\singleton('db')
         ->table('items')
         ->eq('status', 'unread')
         ->save(array('status' => 'read'));
@@ -624,8 +530,8 @@ function mark_items_as_read(array $items_id)
 {
     \PicoTools\singleton('db')->startTransaction();
 
-    foreach ($items_id as $id) {
-        set_item_read($id);
+    foreach($items_id as $encoded_id) {
+        set_item_read(decode_item_id($encoded_id));
     }
 
     \PicoTools\singleton('db')->closeTransaction();
@@ -634,7 +540,7 @@ function mark_items_as_read(array $items_id)
 
 function mark_as_removed()
 {
-    return \PicoTools\singleton('db')
+    \PicoTools\singleton('db')
         ->table('items')
         ->eq('status', 'read')
         ->eq('bookmark', 0)
@@ -752,7 +658,7 @@ function get_config()
 {
     return \PicoTools\singleton('db')
         ->table('config')
-        ->columns('username', 'language', 'autoflush', 'nocontent', 'items_per_page', 'theme', 'api_token')
+        ->columns('username', 'language', 'autoflush', 'nocontent', 'items_per_page', 'theme')
         ->findOne();
 }
 
@@ -805,30 +711,32 @@ function validate_login(array $values)
 
 function validate_config_update(array $values)
 {
-    if (! empty($values['password'])) {
-
+    if (empty($values['password'])) {
         $v = new Validator($values, array(
-            new Validators\Required('username', t('The user name is required')),
-            new Validators\MaxLength('username', t('The maximum length is 50 characters'), 50),
+            // new Validators\Required('username', t('The user name is required')),
+            // new Validators\MaxLength('username', t('The maximum length is 50 characters'), 50),
             new Validators\Required('password', t('The password is required')),
             new Validators\MinLength('password', t('The minimum length is 6 characters'), 6),
-            new Validators\Required('confirmation', t('The confirmation is required')),
+            new Validators\Required('confirmation', t('Matching Password is required')),
             new Validators\Equals('password', 'confirmation', t('Passwords doesn\'t match')),
-            new Validators\Required('autoflush', t('Value required')),
-            new Validators\Required('items_per_page', t('Value required')),
-            new Validators\Integer('items_per_page', t('Must be an integer')),
-            new Validators\Required('theme', t('Value required')),
+            // new Validators\Required('autoflush', t('Value required')),
+            // new Validators\Required('items_per_page', t('Value required')),
+            // new Validators\Integer('items_per_page', t('Must be an integer')),
+            // new Validators\Required('theme', t('Value required')),
+        ));
+    }
+    else if ($values['username'] == "admin") {
+        $v = new Validator($values, array(
+            new Validators\Equals('username', 'admin', t('Username can\'t be admin')),
+            new Validators\Required('username', t('The user name is required')),
+            new Validators\MaxLength('username', t('The maximum length is 50 characters'), 50)
         ));
     }
     else {
 
         $v = new Validator($values, array(
             new Validators\Required('username', t('The user name is required')),
-            new Validators\MaxLength('username', t('The maximum length is 50 characters'), 50),
-            new Validators\Required('autoflush', t('Value required')),
-            new Validators\Required('items_per_page', t('Value required')),
-            new Validators\Integer('items_per_page', t('Must be an integer')),
-            new Validators\Required('theme', t('Value required')),
+            new Validators\MaxLength('username', t('The maximum length is 50 characters'), 50)
         ));
     }
 

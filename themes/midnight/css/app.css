@@ -17,12 +17,6 @@ a:hover {
     color: #fff;
 }
 
-pre, code {
-    color: #fff;
-    background: #555;
-    border-color: #888;
-}
-
 .page-header h2 {
     border-bottom: 1px dotted #555;
 }
@@ -46,16 +40,8 @@ pre, code {
     border: 3px solid #999;
 }
 
-.item h1 a {
-    color: #eee;
-}
-
-.item h1 a:visited {
-    color: #888;
-}
-
 .infos {
-    color: #777;
+    color: #666;
 }
 
 .item .infos a {

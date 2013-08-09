@@ -5,66 +5,13 @@
     var queue_length = 5;
 
 
-    function download_item()
-    {
-        // Change link container
-        var container = document.getElementById("download-item");
-        if (! container) return;
-
-        var item_id = container.getAttribute("data-item-id");
-        var message = container.getAttribute("data-before-message");
-
-        var img = document.createElement("img");
-        img.src = "assets/img/refresh.gif";
-
-        container.innerHTML = "";
-        container.className = "downloading";
-        container.appendChild(img);
-        container.appendChild(document.createTextNode(" " + message));
-
-        var request = new XMLHttpRequest();
-
-        request.onload = function() {
-
-            var response = JSON.parse(request.responseText);
-
-            if (response.result) {
-
-                var content = document.getElementById("item-content");
-                if (content) content.innerHTML = response.content;
-
-                if (container) {
-
-                    var message = container.getAttribute("data-after-message");
-
-                    container.innerHTML = "";
-                    container.appendChild(document.createTextNode(" " + message));
-                }
-            }
-            else {
-
-                if (container) {
-
-                    var message = container.getAttribute("data-failure-message");
-
-                    container.innerHTML = "";
-                    container.appendChild(document.createTextNode(" " + message));
-                }
-            }
-        };
-
-        request.open("POST", "?action=download-item&id=" + item_id, true);
-        request.send();
-    }
-
-
     function switch_status(item_id, hide)
     {
         var request = new XMLHttpRequest();
 
-        request.onload = function() {
+        request.onreadystatechange = function() {
 
-            if (is_listing()) {
+            if (request.readyState === 4 && is_listing()) {
 
                 var response = JSON.parse(request.responseText);
 
@@ -153,7 +100,7 @@
         if (container) {
 
             var img = document.createElement("img");
-            img.src = "assets/img/refresh.gif";
+            img.src = "./assets/img/refresh.gif";
 
             container.appendChild(img);
         }
@@ -164,9 +111,6 @@
     {
         var container = document.getElementById("loading-feed-" + feed_id);
         if (container) container.innerHTML = "";
-
-        var container = document.getElementById("last-checked-feed-" + feed_id);
-        if (container) container.innerHTML = container.getAttribute("data-after-update");
     }
 
 
@@ -189,6 +133,7 @@
                     var response = JSON.parse(this.responseText);
 
                     if (callback) {
+
                         callback(response);
                     }
                 }
@@ -212,6 +157,7 @@
             var feed_id = links[i].getAttribute('data-feed-id');
 
             if (feed_id) {
+
                 feeds.push(parseInt(feed_id));
             }
         }
@@ -498,10 +444,6 @@
                     var item_id = e.target.getAttribute("data-item-id");
                     mark_as_read(item_id);
                     break;
-                case 'download-item':
-                    e.preventDefault();
-                    download_item();
-                    break;
             }
         }
     };
@@ -509,9 +451,6 @@
     document.onkeypress = function(e) {
 
         switch (e.keyCode || e.which) {
-            case 100: // d
-                download_item();
-                break;
             case 112: // p
             case 107: // k
                 open_previous_item();

@@ -16,12 +16,17 @@ use PicoFarad\Session;
 use PicoTools\Template;
 
 
-if (SESSION_SAVE_PATH !== '') session_save_path(SESSION_SAVE_PATH);
 Session\open(dirname($_SERVER['PHP_SELF']));
 
 
 // Called before each action
 Router\before(function($action) {
+    $username = Model\get_config_value('username');
+
+    if($username == "admin") {//no profile exists,
+        //create a new flux using preference changes.
+        Response\redirect('?action=create');
+    }
 
     if ($action !== 'login' && ! isset($_SESSION['user'])) {
 
@@ -34,9 +39,15 @@ Router\before(function($action) {
 
     // HTTP secure headers
     Response\csp(array(
-        'media-src' => '*',
         'img-src' => '*',
-        'frame-src' => \PicoFeed\Filter::$iframe_whitelist
+        'frame-src' => implode(' ', array(
+            'http://www.youtube.com',
+            'https://www.youtube.com',
+            'http://player.vimeo.com',
+            'https://player.vimeo.com',
+            'http://www.dailymotion.com',
+            'https://www.dailymotion.com',
+        ))
     ));
 
     Response\xframe();
@@ -52,7 +63,6 @@ Router\get_action('logout', function() {
     Response\redirect('?action=login');
 });
 
-
 // Display form login
 Router\get_action('login', function() {
 
@@ -63,6 +73,7 @@ Router\get_action('login', function() {
         'values' => array()
     )));
 });
+//}
 
 
 // Check credentials and redirect to unread items
@@ -71,7 +82,7 @@ Router\post_action('login', function() {
     $values = Request\values();
     list($valid, $errors) = Model\validate_login($values);
 
-    if ($valid) Response\redirect('?action=unread');
+    if ($valid) Response\redirect('?action=add');
 
     Response\html(Template\load('login', array(
         'errors' => $errors,
@@ -87,37 +98,38 @@ Router\get_action('show-help', function() {
 });
 
 
-// Show item
+// Show item without bottom nav
 Router\get_action('show', function() {
 
-    $id = Request\param('id');
-    $menu = Request\param('menu');
+    $id = Model\decode_item_id(Request\param('id'));
     $item = Model\get_item($id);
     $feed = Model\get_feed($item['feed_id']);
 
     Model\set_item_read($id);
 
-    switch ($menu) {
-        case 'unread':
-            $nav = Model\get_nav_item($item);
-            break;
-        case 'history':
-            $nav = Model\get_nav_item($item, array('read'));
-            break;
-        case 'feed-items':
-            $nav = Model\get_nav_item($item, array('unread', 'read'), array(1, 0), $item['feed_id']);
-            break;
-        case 'bookmarks':
-            $nav = Model\get_nav_item($item, array('unread', 'read'), array(1));
-            break;
-    }
+    Response\html(Template\layout('show_item', array(
+        'item' => $item,
+        'feed' => $feed,
+        'menu' => 'show'
+    )));
+});
+
+
+// Show item with bottom nav
+Router\get_action('read', function() {
+
+    $id = Model\decode_item_id(Request\param('id'));
+    $item = Model\get_item($id);
+    $feed = Model\get_feed($item['feed_id']);
+    $nav = Model\get_nav_item($item); // must be placed before set_item_read()
+
+    Model\set_item_read($id);
 
     Response\html(Template\layout('show_item', array(
         'item' => $item,
         'feed' => $feed,
-        'item_nav' => isset($nav) ? $nav : null,
-        'menu' => $menu,
-        'title' => $item['title']
+        'item_nav' => $nav,
+        'menu' => 'read'
     )));
 });
 
@@ -125,7 +137,7 @@ Router\get_action('show', function() {
 // Mark item as read and redirect to the listing page
 Router\get_action('mark-item-read', function() {
 
-    $id = Request\param('id');
+    $id = Model\decode_item_id(Request\param('id'));
     $redirect = Request\param('redirect', 'unread');
     $offset = Request\int_param('offset', 0);
 
@@ -138,7 +150,7 @@ Router\get_action('mark-item-read', function() {
 // Mark item as unread and redirect to the listing page
 Router\get_action('mark-item-unread', function() {
 
-    $id = Request\param('id');
+    $id = Model\decode_item_id(Request\param('id'));
     $redirect = Request\param('redirect', 'history');
     $offset = Request\int_param('offset', 0);
 
@@ -151,7 +163,7 @@ Router\get_action('mark-item-unread', function() {
 // Mark item as removed and redirect to the listing page
 Router\get_action('mark-item-removed', function() {
 
-    $id = Request\param('id');
+    $id = Model\decode_item_id(Request\param('id'));
     $redirect = Request\param('redirect', 'history');
     $offset = Request\int_param('offset', 0);
 
@@ -161,17 +173,10 @@ Router\get_action('mark-item-removed', function() {
 });
 
 
-// Ajax call to download an item (fetch the full content from the original website)
-Router\post_action('download-item', function() {
-
-    Response\json(Model\download_item(Request\param('id')));
-});
-
-
 // Ajax call to mark item read
 Router\post_action('mark-item-read', function() {
 
-    $id = Request\param('id');
+    $id = Model\decode_item_id(Request\param('id'));
     Model\set_item_read($id);
     Response\json(array('Ok'));
 });
@@ -180,7 +185,7 @@ Router\post_action('mark-item-read', function() {
 // Ajax call to mark item unread
 Router\post_action('mark-item-unread', function() {
 
-    $id = Request\param('id');
+    $id = Model\decode_item_id(Request\param('id'));
     Model\set_item_unread($id);
     Response\json(array('Ok'));
 });
@@ -189,7 +194,7 @@ Router\post_action('mark-item-unread', function() {
 // Ajax call to bookmark an item
 Router\post_action('bookmark-item', function() {
 
-    $id = Request\param('id');
+    $id = Model\decode_item_id(Request\param('id'));
     Model\bookmark_item($id);
     Response\json(array('Ok'));
 });
@@ -198,10 +203,10 @@ Router\post_action('bookmark-item', function() {
 // Ajax call change item status
 Router\post_action('change-item-status', function() {
 
-    $id = Request\param('id');
+    $id = Model\decode_item_id(Request\param('id'));
 
     Response\json(array(
-        'item_id' => $id,
+        'item_id' => Model\encode_item_id($id),
         'status' => Model\switch_item_status($id)
     ));
 });
@@ -210,18 +215,23 @@ Router\post_action('change-item-status', function() {
 // Add new bookmark
 Router\get_action('bookmark', function() {
 
-    $id = Request\param('id');
-    $menu = Request\param('menu', 'unread');
-    $source = Request\param('source', 'unread');
+    $param_id = Request\param('id');
+    $id = Model\decode_item_id($param_id);
+    $redirect = Request\param('redirect', 'unread');
     $offset = Request\int_param('offset', 0);
 
     Model\set_bookmark_value($id, Request\int_param('value'));
 
-    if ($source === 'show') {
-        Response\Redirect('?action=show&menu='.$menu.'&id='.$id);
+    if ($redirect === 'show') {
+
+        Response\Redirect('?action=show&id='.$param_id);
+    }
+    else if ($redirect === 'read') {
+
+        Response\Redirect('?action=read&id='.$param_id);
     }
 
-    Response\Redirect('?action='.$menu.'&offset='.$offset);
+    Response\Redirect('?action='.$redirect.'&offset='.$offset);
 });
 
 
@@ -279,6 +289,62 @@ Router\get_action('bookmarks', function() {
 });
 
 
+// Confirmation box to remove a feed
+Router\get_action('confirm-remove-feed', function() {
+
+    $id = Request\int_param('feed_id');
+
+    Response\html(Template\layout('confirm_remove_feed', array(
+        'feed' => Model\get_feed($id),
+        'menu' => 'feeds',
+        'title' => t('Confirmation')
+    )));
+});
+
+
+// Remove a feed
+Router\get_action('remove-feed', function() {
+
+    $id = Request\int_param('feed_id');
+
+    if ($id && Model\remove_feed($id)) {
+
+        Session\flash(t('This subscription has been removed successfully.'));
+    }
+    else {
+
+        Session\flash_error(t('Unable to remove this subscription.'));
+    }
+
+    Response\redirect('?action=feeds');
+});
+
+
+// Refresh one feed and redirect to unread items
+Router\get_action('refresh-feed', function() {
+
+    $id = Request\int_param('feed_id');
+    if ($id) Model\update_feed($id);
+    Model\write_debug();
+    Response\redirect('?action=unread');
+});
+
+
+// Ajax call to refresh one feed
+Router\post_action('refresh-feed', function() {
+
+    $id = Request\int_param('feed_id', 0);
+
+    if ($id) {
+
+        $result = Model\update_feed($id);
+        Model\write_debug();
+    }
+
+    Response\json(array('feed_id' => $id, 'result' => $result));
+});
+
+
 // Mark all unread items as read
 Router\get_action('mark-as-read', function() {
 
@@ -321,104 +387,6 @@ Router\get_action('refresh-all', function() {
 
     Session\flash(t('Your subscriptions are updated'));
     Response\redirect('?action=unread');
-});
-
-
-// Confirmation box to disable a feed
-Router\get_action('confirm-disable-feed', function() {
-
-    $id = Request\int_param('feed_id');
-
-    Response\html(Template\layout('confirm_disable_feed', array(
-        'feed' => Model\get_feed($id),
-        'menu' => 'feeds',
-        'title' => t('Confirmation')
-    )));
-});
-
-
-// Disable a feed
-Router\get_action('disable-feed', function() {
-
-    $id = Request\int_param('feed_id');
-
-    if ($id && Model\disable_feed($id)) {
-        Session\flash(t('This subscription has been disabled successfully.'));
-    }
-    else {
-        Session\flash_error(t('Unable to disable this subscription.'));
-    }
-
-    Response\redirect('?action=feeds');
-});
-
-
-// Enable a feed
-Router\get_action('enable-feed', function() {
-
-    $id = Request\int_param('feed_id');
-
-    if ($id && Model\enable_feed($id)) {
-        Session\flash(t('This subscription has been enabled successfully.'));
-    }
-    else {
-        Session\flash_error(t('Unable to enable this subscription.'));
-    }
-
-    Response\redirect('?action=feeds');
-});
-
-
-// Confirmation box to remove a feed
-Router\get_action('confirm-remove-feed', function() {
-
-    $id = Request\int_param('feed_id');
-
-    Response\html(Template\layout('confirm_remove_feed', array(
-        'feed' => Model\get_feed($id),
-        'menu' => 'feeds',
-        'title' => t('Confirmation')
-    )));
-});
-
-
-// Remove a feed
-Router\get_action('remove-feed', function() {
-
-    $id = Request\int_param('feed_id');
-
-    if ($id && Model\remove_feed($id)) {
-        Session\flash(t('This subscription has been removed successfully.'));
-    }
-    else {
-        Session\flash_error(t('Unable to remove this subscription.'));
-    }
-
-    Response\redirect('?action=feeds');
-});
-
-
-// Refresh one feed and redirect to unread items
-Router\get_action('refresh-feed', function() {
-
-    $id = Request\int_param('feed_id');
-    if ($id) Model\update_feed($id);
-    Model\write_debug();
-    Response\redirect('?action=unread');
-});
-
-
-// Ajax call to refresh one feed
-Router\post_action('refresh-feed', function() {
-
-    $id = Request\int_param('feed_id', 0);
-
-    if ($id) {
-        $result = Model\update_feed($id);
-        Model\write_debug();
-    }
-
-    Response\json(array('feed_id' => $id, 'result' => $result));
 });
 
 
@@ -559,6 +527,40 @@ Router\get_action('config', function() {
     )));
 });
 
+// Create minflux install
+Router\post_action('create', function() {
+
+    $values = Request\values() + array('nocontent' => 0);
+    list($valid, $errors) = Model\validate_config_update($values);
+
+    if ($valid) {
+        if ($values['username'] !== "admin" && Model\save_config($values)) {
+
+            Session\flash(t('Your preferences are updated.'));
+        }
+        else if(array('username') !== "admin"){
+            Session\flash_error(t('Your username is currently \'admin\'. Change it.'));
+        }
+        else {
+
+            Session\flash_error(t('Unable to update your preferences.'));
+        }
+
+        Response\redirect('?action=create');
+    }
+
+    Response\html(Template\layout('create', array(
+        'errors' => $errors,
+        'values' => $values,
+        'db_size' => filesize(DB_FILENAME),
+        'languages' => Model\get_languages(),
+        'autoflush_options' => Model\get_autoflush_options(),
+        'paging_options' => Model\get_paging_options(),
+        'theme_options' => Model\get_themes(),
+        'menu' => 'config', //create?
+        'title' => t('Install Miniflux')
+    )));
+});
 
 // Update preferences
 Router\post_action('config', function() {
@@ -567,10 +569,12 @@ Router\post_action('config', function() {
     list($valid, $errors) = Model\validate_config_update($values);
 
     if ($valid) {
-
-        if (Model\save_config($values)) {
+        if ($values['username'] !== "admin" && Model\save_config($values)) {
 
             Session\flash(t('Your preferences are updated.'));
+        }
+        else if(array('username') !== "admin"){
+            Session\flash_error(t('Your username is currently \'admin\'. Change it.'));
         }
         else {
 
@@ -611,7 +615,7 @@ Router\notfound(function() {
         'nb_unread_items' => $nb_items,
         'offset' => $offset,
         'items_per_page' => Model\get_config_value('items_per_page'),
-        'title' => 'Miniflux ('.$nb_items.')',
+        'title' => 'miniflux ('.$nb_items.')',
         'menu' => 'unread'
     )));
 });
